@@ -1,6 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -18,9 +22,13 @@ class MyApp extends StatelessWidget {
         // or simply save your changes to "hot reload" in a Flutter IDE).
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.indigo,
+        // This makes the visual density adapt to the platform that you run
+        // the app on. For desktop platforms, the controls will be smaller and
+        // closer together (more dense) than on mobile platforms.
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Hot Reload Demo'),
     );
   }
 }
@@ -45,6 +53,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  bool _reversed = false;
+  List<UniqueKey> _buttonKeys = [UniqueKey(), UniqueKey()];
 
   void _incrementCounter() {
     setState(() {
@@ -57,8 +67,49 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void _decrementCounter() {
+    setState(() {
+      _counter--;
+    });
+  }
+
+  void _resetCounter() {
+    setState(() {
+      _counter = 0;
+    });
+    _swap();
+  }
+
+  void _swap() {
+    setState(() {
+      _reversed = !_reversed;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final incrementButton = FancyButton(
+      key: _buttonKeys.first,
+      child: Text(
+        "Increment",
+        style: TextStyle(color: Colors.white),
+      ),
+      onPressed: _incrementCounter,
+    );
+    final decrementButton = FancyButton(
+      key: _buttonKeys.last,
+      child: Text(
+        "Decrement",
+        style: TextStyle(color: Colors.white),
+      ),
+      onPressed: _decrementCounter,
+    );
+
+    List<Widget> _buttons = <Widget>[incrementButton, decrementButton];
+
+    if (_reversed) {
+      _buttons = _buttons.reversed.toList();
+    }
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -75,7 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Column(
-          // Column is also layout widget. It takes a list of children and
+          // Column is also a layout widget. It takes a list of children and
           // arranges them vertically. By default, it sizes itself to fit its
           // children horizontally, and tries to be as tall as its parent.
           //
@@ -91,21 +142,82 @@ class _MyHomePageState extends State<MyHomePage> {
           // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            Container(
+              margin: EdgeInsets.only(bottom: 100.0),
+              padding: EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.25),
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              child: Image.asset(
+                'flutter_logo_1080.png',
+                width: 100.0,
+              ),
+            ),
             Text(
               'You have pushed the button this many times:',
             ),
             Text(
               '$_counter',
-              style: Theme.of(context).textTheme.display1,
+              style: Theme
+                  .of(context)
+                  .textTheme
+                  .headline4,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: _buttons,
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
+        onPressed: _resetCounter,
+        tooltip: 'Reset Counter',
+        child: Icon(Icons.refresh),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
+
+class FancyButton extends StatefulWidget {
+  final VoidCallback onPressed;
+  final Widget child;
+
+
+  FancyButton({Key key, this.onPressed, this.child}) : super(key: key);
+
+  @override
+  _FancyButtonState createState() => _FancyButtonState();
+}
+
+class _FancyButtonState extends State<FancyButton> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        child: RaisedButton(
+          color: _getColors(),
+          child: widget.child,
+          onPressed: widget.onPressed,
+        )
+    );
+  }
+
+  Color _getColors() {
+    return _buttonColors.putIfAbsent(this, () => colors[next(0, 5)]);
+  }
+}
+
+Map<_FancyButtonState, Color> _buttonColors = {};
+final _random = Random();
+
+int next(int min, int max) => min + _random.nextInt(max - min);
+List<Color> colors = [
+  Colors.blue,
+  Colors.green,
+  Colors.orange,
+  Colors.purple,
+  Colors.amber,
+  Colors.lightBlue
+];
+
